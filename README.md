@@ -45,14 +45,3 @@ After revert:
 ```
 
 `git diff HEAD^^ HEAD` should produce no output.
-
-## Clang Format
-
-Install clang-format
-
-- macOS: `brew install clang-format`
-- Ubuntu: `sudo apt-get install clang-format`
-
-Usage:
-  - Reformat single file: `clang-format -i file_name.ts`
-  - Reformat all files: `find . -name "*.ts" | xargs clang-format -i`
