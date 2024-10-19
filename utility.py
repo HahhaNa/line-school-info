@@ -251,7 +251,7 @@ def get_flex_message_for_notes(note_contents):
             ]
         }
     }
-    return json.dumps(flex_message)
+    return flex_message  # 不要使用 json.dumps()
 
 
 
@@ -346,6 +346,8 @@ def get_flex_message_for_todos(todo_contents):
 def get_user_notes(user_id):
     user_notes_ref = db.reference(f'users/{user_id}/notes')
     user_notes = user_notes_ref.get()
+    print(f"user_notes: {user_notes}")  # 調試用
+
     if user_notes:
         notes_ref = db.reference('notes')
         note_contents = []
@@ -353,11 +355,14 @@ def get_user_notes(user_id):
             note = notes_ref.child(note_id).get()
             if note:
                 note_contents.append(f"{note['content']}")
+        print(f"note_contents: {note_contents}")  # 調試用
         
-        # 使用 Flex Message 格式
         return get_flex_message_for_notes(note_contents)
     else:
-        return json.dumps({"type": "text", "text": "目前沒有任何筆記。"})
+        return {
+            "type": "text",
+            "text": "目前沒有任何筆記。"
+        }
 
 
 

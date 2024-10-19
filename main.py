@@ -67,19 +67,19 @@ def handle_message(event):
         user_message = event.message.text
 
         # 處理不同的指令
-        if event.message.text == '!查看筆記':
+        if user_message == '!查看筆記':
             notes_flex = utility.get_user_notes(user_id)
             line_bot_api.reply_message(
                 event.reply_token,
                 FlexSendMessage(alt_text='這是您的筆記內容', contents=json.loads(notes_flex))
             )
-        elif event.message.text == '!查看活動事件':
+        elif user_message == '!查看活動事件':
             events_flex = utility.get_user_events(user_id)
             line_bot_api.reply_message(
                 event.reply_token,
                 FlexSendMessage(alt_text='這是您的活動事件', contents=json.loads(events_flex))
             )
-        elif event.message.text == '!查看當日TODO':
+        elif user_message == '!查看當日TODO':
             todos_flex = utility.get_user_todos(user_id)
             line_bot_api.reply_message(
                 event.reply_token,
