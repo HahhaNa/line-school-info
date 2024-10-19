@@ -1,19 +1,35 @@
 import logging
 import os
-import re
-import requests
-import json
 import google.generativeai as genai
 
 # Configure logger
 logger = logging.getLogger(__file__)
+
+def format_data(type: str, text: str):
+    if type == "note":
+        return format_note(text)
+    elif type == "todo":
+        return format_todo(text)
+    elif type == "event":
+        return format_event(text)
+    else:
+        return {
+            "error": "Invalid type"
+        }
+
+def format_note(text: str):
+    response = {
+        "content": text
+    }
+    print(response)
+    return response
 
 def format_todo(text: str):
     # Configure the generative AI API with the API key
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     
     # Specify the model you want to use (ensure the model name is correct)
-    model = genai.GenerativeModel(name="gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     
     # Define the prompt for generating the content
     prompt = f"""
@@ -35,6 +51,7 @@ def format_todo(text: str):
     
     # Log the AI response
     logger.info(response.text)
+    print(response.text)
     
     # Return the text as it should already be in JSON format
     return response.text
@@ -44,7 +61,7 @@ def format_event(text: str):
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     
     # Specify the model you want to use (ensure the model name is correct)
-    model = genai.GenerativeModel(name="gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     
     # Define the prompt for generating the content
     prompt = f"""
@@ -70,6 +87,7 @@ def format_event(text: str):
     
     # Log the AI response
     logger.info(response.text)
+    print(response.text)
     
     # Return the text as it should already be in JSON format
     return response.text
