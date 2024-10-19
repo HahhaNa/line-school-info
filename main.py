@@ -9,7 +9,7 @@ import os
 import time
 
 # image.py import
-from image import handle_image_message
+from message import handle_image_message, handle_text_message
 import utility
 
 
@@ -60,11 +60,6 @@ def handle_follow(event):
 def handle_message(event):
     user_id = event.source.user_id
 
-    # 檢查 reply token 是否有效
-    if event.reply_token == '00000000000000000000000000000000':
-        # 略過健康檢查的回覆
-        return
-
     reply_message = None
 
     # 檢查訊息類型
@@ -111,15 +106,15 @@ def handle_message(event):
             except Exception as e:
                 reply_message = f'新增 TO-DO 失敗: {e}'
         else:
-            reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
-
-        # 回覆用戶
-        if reply_message:
-            utility.send_reply_message(event, reply_message)
+            reply_message = handle_text_message(event)
 
     elif isinstance(event.message, ImageMessage):
         # 如果是圖片訊息，呼叫 handle_image_message
-        handle_image_message(event)
+        reply_message = handle_image_message(event)
+
+    # 回覆用戶
+    if reply_message:
+        utility.send_reply_message(event, reply_message)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
