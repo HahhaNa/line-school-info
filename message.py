@@ -3,9 +3,9 @@ from io import BytesIO
 import pytesseract
 import re
 import logging
-import os 
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import TextSendMessage, ImageMessage
+import os 
 from classify import classify
 import utility
 
@@ -65,7 +65,6 @@ def handle_image_message(event):
     extracted_text = extract_text_from_image(image)
 
     return handle_text_message(extracted_text)
-    
 
 def extract_text_from_image(image: Image.Image):
     """
