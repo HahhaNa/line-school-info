@@ -18,11 +18,12 @@ def format_data(type: str, text: str):
         }
 
 def format_note(text: str):
-    response = {
+    response = {{
         "content": text
-    }
+    }}
     print(response)
-    return response
+    return text
+    # return response
 
 def format_todo(text: str):
     # Configure the generative AI API with the API key
@@ -39,12 +40,18 @@ def format_todo(text: str):
     如果是中華民國年，請轉換成西元年，例如 110 年要轉換成 2021 年。
     content 請只保留純文字，不要有任何 HTML 標籤。
     不准有 markdown 的格式。
-    輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
-    {{
+    輸出成dict，絕對不能有其他多餘的格式，例如：
+    {
         "deadline": "20240409T070000Z",
         "description": "這是描述"
-    }}
+    }
     """
+    # 輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
+    # {{
+    #     "deadline": "20240409T070000Z",
+    #     "description": "這是描述"
+    # }}
+    # """
 
     # Generate content using the model
     response = model.generate_content([prompt, text])
@@ -72,15 +79,24 @@ def format_event(text: str):
     如果是中華民國年，請轉換成西元年，例如 110 年要轉換成 2021 年。
     content 請只保留純文字，不要有任何 HTML 標籤，並且幫忙列點一些活動的注意事項。
     不准有 markdown 的格式。
-    輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
-    {{
+    輸出成dict，絕對不能有其他多餘的格式，例如：
+    {
         "title": "活動標題",
         "description": "這是描述",
         "location": "地點",
         "startTime": "20240409T070000Z",
-        "endTime": "20240409T080000Z",
-    }}
+        "endTime": "20240409T080000Z"
+    }
     """
+    # 輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
+    # {{
+    #     "title": "活動標題",
+    #     "description": "這是描述",
+    #     "location": "地點",
+    #     "startTime": "20240409T070000Z",
+    #     "endTime": "20240409T080000Z",
+    # }}
+    # """
 
     # Generate content using the model
     response = model.generate_content([prompt, text])
