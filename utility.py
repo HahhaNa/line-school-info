@@ -1,10 +1,6 @@
-from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
-
-import firebase_admin
-from firebase_admin import credentials, db
+from linebot import LineBotApi
+from linebot.models import TextSendMessage, QuickReply, QuickReplyButton, MessageAction
+from firebase_admin import db
 import os
 import time
 

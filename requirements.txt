@@ -4,8 +4,5 @@ firebase_admin
 uvicorn[standard]
 line-bot-sdk
 google.generativeai
-grpcio
-pillow
 pytesseract
-requests
 git+https://github.com/ozgur/python-firebase
