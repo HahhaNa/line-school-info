@@ -4,7 +4,7 @@ import pytesseract
 import re
 import logging
 from linebot import LineBotApi, WebhookHandler
-from linebot.models import TextSendMessage, ImageMessage
+from linebot.models import TextSendMessage, ImageMessage, MessageEvent, TextMessage
 import os 
 from classify import classify
 import utility
@@ -28,6 +28,7 @@ LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '9b39153b154382ce669ca95f
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+@handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     """
     處理文字訊息，將文字分類並回覆給用戶
@@ -54,6 +55,7 @@ def handle_text_message(event):
         reply_message = TextSendMessage(text="An error occurred while processing the text.")
     return reply_message
 
+@handler.add(MessageEvent, message=ImageMessage)
 def handle_image_message(event):
     """
     處理圖片訊息，提取圖片中的文字並回覆給用戶
