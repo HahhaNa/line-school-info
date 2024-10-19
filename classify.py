@@ -19,7 +19,8 @@ def classify(text: str):
     如果是筆記，請輸出 "note"。
     如果是待辦事項，請輸出 "todo"。
     如果是活動，請輸出 "event"。
-    只能輸出這三種類型，不准有其他的輸出。
+    分辨不出來的話，請輸出 "unknown"。
+    只能輸出這四種類型，不准有其他的輸出。
     """
 
     # Generate content using the model

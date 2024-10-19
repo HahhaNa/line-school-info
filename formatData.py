@@ -13,9 +13,7 @@ def format_data(type: str, text: str):
     elif type == "event":
         return format_event(text)
     else:
-        return {
-            "error": "Invalid type"
-        }
+        return ""
 
 def format_note(text: str):
     response = {{

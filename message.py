@@ -10,7 +10,7 @@ from classify import classify
 import utility
 
 # 設定 pytesseract 的安裝路徑
-pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
 
 # 初始化 logger
 logger = logging.getLogger(__name__)
@@ -28,26 +28,43 @@ LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '9b39153b154382ce669ca95f
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+def handle_text_message(event):
+    """
+    處理文字訊息，將文字分類並回覆給用戶
+    :param event: LINE bot 傳來的事件
+    """
+    try:
+        response_type, formatted_output = classify(event.message.text)
+        if response_type == "unknown":
+            reply_message = TextSendMessage(text="抱歉，我不太明白您的指令。請選擇以下其中一個操作：")
+        elif response_type == "note":
+            reply_message = TextSendMessage(text="筆記已新增！")
+            utility.add_user_note(event.source.user_id, formatted_output)
+        elif response_type == "todo":
+            reply_message = TextSendMessage(text="TO-DO 已新增！")
+            utility.add_user_todo(event.source.user_id, formatted_output)
+        elif response_type == "event":
+            reply_message = TextSendMessage(text="活動事件已新增！")
+            utility.add_user_event(event.source.user_id, formatted_output)
+        else:
+            reply_message = TextSendMessage(text="Sorry, I couldn't classify the content.")
+
+    except Exception as e:
+        logger.error(f"Error handling text message: {str(e)}")
+        reply_message = TextSendMessage(text="An error occurred while processing the text.")
+    return reply_message
+
 def handle_image_message(event):
     """
     處理圖片訊息，提取圖片中的文字並回覆給用戶
     :param event: LINE bot 傳來的事件
     """
-    try:
-        message_id = event.message.id
-        message_content = line_bot_api.get_message_content(message_id)
-        image = Image.open(BytesIO(message_content.content))
-        extracted_text = extract_text_from_image(image)
+    message_id = event.message.id
+    message_content = line_bot_api.get_message_content(message_id)
+    image = Image.open(BytesIO(message_content.content))
+    extracted_text = extract_text_from_image(image)
 
-        if extracted_text:
-            reply_message = TextSendMessage(text=extracted_text)
-        else:
-            reply_message = TextSendMessage(text="Sorry, I couldn't extract any text from the image.")
-
-        line_bot_api.reply_message(event.reply_token, reply_message)
-    except Exception as e:
-        logger.error(f"Error handling image message: {str(e)}")
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="An error occurred while processing the image."))
+    return handle_text_message(extracted_text)
 
 def extract_text_from_image(image: Image.Image):
     """
