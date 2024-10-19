@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
+from linebot.models import FollowEvent, MessageEvent, PostbackEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -85,6 +85,19 @@ def handle_message(event):
 
     # 回覆用戶
     if reply_message:
+        utility.send_reply_message(event, reply_message)
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    user_id = event.source.user_id
+
+    # 假設您的 Rich Menu 按鈕的 postback_data 是 'open_link'
+    if event.data == 'open_link':
+        # 創建帶有 user_id 的 URL
+        link_url = f"https://curriculum-4e9d2.web.app?user_id={user_id}"
+
+        # 發送回覆給用戶
+        reply_message = f"您可以通過以下連結訪問課表：\n{link_url}"
         utility.send_reply_message(event, reply_message)
 
 if __name__ == "__main__":
