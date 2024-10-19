@@ -124,6 +124,8 @@ def handle_message(event):
     # 回覆用戶
     if reply_message:
         utility.send_reply_message(event, reply_message)
+    else:
+        quick_reply_buttons = utility.create_quick_reply_buttons()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
