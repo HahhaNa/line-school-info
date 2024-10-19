@@ -109,6 +109,10 @@ def handle_message(event):
                 reply_message = f'格式錯誤: {ve}'
             except Exception as e:
                 reply_message = f'新增 TO-DO 失敗: {e}'
+        # elif user_message == "下堂課如下":
+        elif user_message == "今日課表如下":
+            todayclass = get_user_todayclass(user_id)
+            reply_message = f'：\n{todayclass}'
         else:
             reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
 
@@ -357,6 +361,23 @@ def get_user_todos(user_id):
         return "\n".join(todo_contents)
     else:
         return "目前沒有任何 TO-DO。"
+
+# TODO: 我希望是跟上面一樣包成一個today_class_content
+def get_user_todayclass(user_id):
+    # user_todayclass_ref = db.reference(f'timetables/{user_id}')
+    user_todayclass_ref = db.reference(f'timetables/user123')
+    user_todayclass = user_todayclass_ref.get()
+
+    # 假設今天是星期一
+    today_classes = user_todayclass.get('monday', [])
+
+    if today_classes:
+        class_contents = []
+        for course in today_classes:
+            class_contents.append(f"第 {course['period']} 節: {course['course']}")
+        return "\n".join(class_contents)
+    else:
+        return "今天沒有課！"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
