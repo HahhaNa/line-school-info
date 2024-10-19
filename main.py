@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, PostbackEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
+from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -9,7 +9,7 @@ import os
 import time
 
 # image.py import
-from message import handle_image_message, handle_text_message
+from image import handle_image_message
 import utility
 
 
@@ -60,6 +60,11 @@ def handle_follow(event):
 def handle_message(event):
     user_id = event.source.user_id
 
+    # 檢查 reply token 是否有效
+    if event.reply_token == '00000000000000000000000000000000':
+        # 略過健康檢查的回覆
+        return
+
     reply_message = None
 
     # 檢查訊息類型
@@ -76,29 +81,45 @@ def handle_message(event):
         elif user_message == '!查看當日TODO':
             todos = utility.get_user_todos(user_id)
             reply_message = f'這是您今日的TODO：\n{todos}'
+        elif user_message == '!新增筆記':
+            reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
+        elif user_message.startswith('content:'):
+            note_content = user_message.split('content:', 1)[1].strip()
+            utility.add_user_note(user_id, note_content)
+            reply_message = '筆記已新增！'
+        elif user_message == '!新增活動事件':
+            reply_message = '請輸入活動事件，格式為：\ntitle: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
+        elif user_message.startswith('title:'):
+            try:
+                event_details = utility.parse_event_details(user_message)
+                utility.add_user_event(user_id, event_details)
+                reply_message = '活動事件已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增活動事件失敗: {e}'
+        elif user_message == '!新增TO-DO':
+            # 單純提供格式，而不進行任何資料庫操作
+            reply_message = '請輸入TO-DO，格式為：\ndeadline: ...\ndescription: ...'
+        elif user_message.startswith('deadline:'):
+            try:
+                todo_details = utility.parse_todo_details(user_message)
+                utility.add_user_todo(user_id, todo_details)
+                reply_message = 'TO-DO 已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增 TO-DO 失敗: {e}'
         else:
-            reply_message = handle_text_message(event)
+            reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
+
+        # 回覆用戶
+        if reply_message:
+            utility.send_reply_message(event, reply_message)
 
     elif isinstance(event.message, ImageMessage):
         # 如果是圖片訊息，呼叫 handle_image_message
-        reply_message = handle_image_message(event)
-
-    # 回覆用戶
-    if reply_message:
-        utility.send_reply_message(event, reply_message)
-
-@handler.add(PostbackEvent)
-def handle_postback(event):
-    user_id = event.source.user_id
-
-    # 假設您的 Rich Menu 按鈕的 postback_data 是 'open_link'
-    if event.data == 'open_link':
-        # 創建帶有 user_id 的 URL
-        link_url = f"https://curriculum-4e9d2.web.app?user_id={user_id}"
-
-        # 發送回覆給用戶
-        reply_message = f"您可以通過以下連結訪問課表：\n{link_url}"
-        utility.send_reply_message(event, reply_message)
+        handle_image_message(event)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
