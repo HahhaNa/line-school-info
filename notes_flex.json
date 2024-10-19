@@ -35,6 +35,38 @@
             "color": "#666666",
             "size": "sm",
             "flex": 5
+          },
+          {
+            "type": "text",
+            "text": "筆記內容3",
+            "wrap": true,
+            "color": "#666666",
+            "size": "sm",
+            "flex": 5
+          },
+          {
+            "type": "text",
+            "text": "筆記內容4",
+            "wrap": true,
+            "color": "#666666",
+            "size": "sm",
+            "flex": 5
+          },
+          {
+            "type": "text",
+            "text": "筆記內容5",
+            "wrap": true,
+            "color": "#666666",
+            "size": "sm",
+            "flex": 5
+          },
+          {
+            "type": "text",
+            "text": "筆記內容6",
+            "wrap": true,
+            "color": "#666666",
+            "size": "sm",
+            "flex": 5
           }
         ]
       }

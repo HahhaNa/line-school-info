@@ -1,5 +1,6 @@
 from PIL import Image
 from io import BytesIO
+import platform
 import pytesseract
 import re
 import logging
@@ -10,7 +11,12 @@ from classify import classify
 import utility
 
 # 設定 pytesseract 的安裝路徑
-# pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+if platform.system() == 'Darwin':  # macOS
+    pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+elif platform.system() == 'Windows':  # Windows
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+else:
+    raise Exception("Unsupported OS")
 
 # 初始化 logger
 logger = logging.getLogger(__name__)
