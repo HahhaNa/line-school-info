@@ -2,7 +2,7 @@ fastapi
 flask
 firebase_admin
 uvicorn[standard]
-line-bot-sdk
+line-bot-sdk==2.0.1
 google.generativeai
 grpcio
 pillow
