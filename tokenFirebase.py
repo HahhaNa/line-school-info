@@ -15,6 +15,8 @@ from gcal import gcal
 from ai import ai_reply
 import requests
 import os
+import threading
+import time
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 # Flask 初始化
 app = Flask(__name__)
@@ -23,7 +25,7 @@ flow = None
 
 # Firebase 初始化
 firebase_admin.initialize_app(credentials.Certificate('adminsdk.json'), {
-    'databaseURL': 'https://curriculum-4e9d2-default-rtdb.firebaseio.com/'
+    'databaseURL': os.getenv('DATABASEURL')
 })
 
 # Google OAuth 2.0 授權
@@ -119,7 +121,12 @@ def search_and_extract_emails(credentials, user_email):
 
     mail.close()
     mail.logout()
-
+# 在背景中定期運行的函數
+def background_task(credentials, user_email, interval=60):
+    while True:
+        print("Checking for new emails...")
+        search_and_extract_emails(credentials, user_email)
+        time.sleep(interval)  # 每隔 60 秒檢查一次
 # 提取信件正文
 def extract_body(msg):
     if msg.is_multipart():
@@ -131,6 +138,31 @@ def extract_body(msg):
                 return soup.get_text()
     else:
         return msg.get_payload(decode=True).decode('utf-8')
+def check_emails_for_all_users():
+    # 取得 Firebase Database 中所有 users 的資料
+    users_ref = db.reference('/users')
+    users = users_ref.get()
 
+    # 遍歷每個 user 的資料
+    for user_id, user_data in users.items():
+        if 'email' in user_data and 'token' in user_data:
+            user_email = user_data['email']
+            token_info = user_data['token']
+            
+            # 建立 credentials 物件
+            creds = Credentials(
+                token=token_info['token'],
+                refresh_token=token_info.get('refresh_token'),
+                token_uri=token_info['token_uri'],
+                client_id=token_info['client_id'],
+                client_secret=token_info['client_secret'],
+                scopes=token_info['scopes']
+            )
+
+            # 執行 search_and_extract_emails 函數
+            search_and_extract_emails(creds, user_email)
 if __name__ == '__main__':
+    credentials = None  # 根據實際情況，初始化這些變數
+    user_email = None
+    threading.Thread(target=background_task, args=(credentials, user_email)).start()
     app.run('localhost', 8080, debug=True)

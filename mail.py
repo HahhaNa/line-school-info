@@ -114,9 +114,31 @@ def search_and_extract_emails():
     # 關閉連線
     mail.close()
     mail.logout()
+def check_emails_for_all_users():
+    # 取得 Firebase Database 中所有 users 的資料
+    users_ref = db.reference('/users')
+    users = users_ref.get()
 
+    # 遍歷每個 user 的資料
+    for user_id, user_data in users.items():
+        if 'email' in user_data and 'token' in user_data:
+            user_email = user_data['email']
+            token_info = user_data['token']
+            
+            # 建立 credentials 物件
+            creds = Credentials(
+                token=token_info['token'],
+                refresh_token=token_info.get('refresh_token'),
+                token_uri=token_info['token_uri'],
+                client_id=token_info['client_id'],
+                client_secret=token_info['client_secret'],
+                scopes=token_info['scopes']
+            )
+
+            # 執行 search_and_extract_emails 函數
+            search_and_extract_emails(creds, user_email)
 if __name__ == '__main__':
-
+    
     while True:
         search_and_extract_emails()
     
