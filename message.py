@@ -66,7 +66,7 @@ def handle_image_message(event):
     image = Image.open(BytesIO(message_content.content))
     extracted_text = extract_text_from_image(image)
 
-    return handle_text_message(extracted_text)
+    return handle_text_message(TextMessage(id=message_id, text=extracted_text))
 
 def extract_text_from_image(image: Image.Image):
     """
