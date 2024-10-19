@@ -1,32 +1,4 @@
 # line-school-info
-## Installation
-
-1. Clone 專案:
-    ```bash
-    git clone https://github.com/louis70109/linebot-image2calendar.git
-    cd linebot-image2calendar
-    ```
-
-2. 透過虛擬環境開啟:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
-
-3. 安裝套件:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4. 將 `.env.sample` 改名為 `.env` 並把相對應的參數都放入
-
-## 啟動服務
-
-1. 開啟 FastAPI application:
-    ```bash
-    uvicorn main:app --host 0.0.0.0 --port 8080 --reload
-    // python main.py
-    ```
 ## Git
 
 ### Add & Commit

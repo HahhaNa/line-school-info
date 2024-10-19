@@ -1,47 +1,56 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import PlainTextResponse
+from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, ImageMessage
+from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
 
 import firebase_admin
-from firebase_admin import credentials
+from firebase_admin import credentials, db
 import os
+import time
 
 # image.py import
 from image import handle_image_message
 import utility
 
-# Initialize FastAPI application
-app = FastAPI()
 
-# Initialize LineBotApi and WebhookHandler
+# 初始化 Flask 應用
+app = Flask(__name__)
+
+# 初始化 LineBotApi 和 WebhookHandler
+# LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', 'U5q89tva8HSnVXrP91MStbXkyLoNL9qWlm1i810j46Kyp/VmgYPsvbz/Mfb//Jgu6G7kJHuYd1nXH2rVAm6NF3H4ord5OxhaXnHRjYXKPKYys4vdiVBAgtD2kF0IWIzI7MYvgfMXVIvQ8FmrvOvbrAdB04t89/1O/w1cDnyilFU=')
 LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '9b39153b154382ce669ca95fb4a11305')
+
+# line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# Initialize Firebase Admin SDK
+# 初始化 Firebase Admin SDK
 cred = credentials.Certificate("line-school-info-firebase-adminsdk-74vka-d87b39d170.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://line-school-info-default-rtdb.firebaseio.com/'
 })
 
-@app.post("/callback")
-async def callback(request: Request):
-    signature = request.headers.get('X-Line-Signature')
-    if not signature:
-        return HTTPException(status_code=400, detail="Missing 'X-Line-Signature' header")
 
-    body = await request.body()
-    body = body.decode('utf-8')
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers.get('X-Line-Signature')
+
+    if not signature:
+        app.logger.error("Missing 'X-Line-Signature' header")
+        abort(400)
+
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
 
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
-        return HTTPException(status_code=400, detail="Invalid signature. Check your channel secret.")
+        app.logger.error("Invalid signature. Check your channel secret.")
+        abort(400)
     except Exception as e:
-        return HTTPException(status_code=500, detail=f"Error while handling the request: {e}")
+        app.logger.error(f"Error while handling the request: {e}")
+        abort(500)
 
-    return PlainTextResponse('OK')
+    return 'OK'
 
 @handler.add(FollowEvent)
 def handle_follow(event):
@@ -51,17 +60,18 @@ def handle_follow(event):
 def handle_message(event):
     user_id = event.source.user_id
 
-    # Check if reply token is valid
+    # 檢查 reply token 是否有效
     if event.reply_token == '00000000000000000000000000000000':
-        # Skip health check reply
+        # 略過健康檢查的回覆
         return
 
     reply_message = None
 
-    # Handle different commands
+    # 檢查訊息類型
     if isinstance(event.message, TextMessage):
         user_message = event.message.text
 
+        # 處理不同的指令
         if user_message == '!查看筆記':
             notes = utility.get_user_notes(user_id)
             reply_message = f'這是您的筆記內容：\n{notes}'
@@ -89,6 +99,7 @@ def handle_message(event):
             except Exception as e:
                 reply_message = f'新增活動事件失敗: {e}'
         elif user_message == '!新增TO-DO':
+            # 單純提供格式，而不進行任何資料庫操作
             reply_message = '請輸入TO-DO，格式為：\ndeadline: ...\ndescription: ...'
         elif user_message.startswith('deadline:'):
             try:
@@ -102,14 +113,13 @@ def handle_message(event):
         else:
             reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
 
+        # 回覆用戶
         if reply_message:
             utility.send_reply_message(event, reply_message)
 
     elif isinstance(event.message, ImageMessage):
+        # 如果是圖片訊息，呼叫 handle_image_message
         handle_image_message(event)
 
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", default=8080))
-    debug = True if os.environ.get("API_ENV", default="develop") == "develop" else False
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=debug)
+    app.run(host='0.0.0.0', port=8000, debug=True)
