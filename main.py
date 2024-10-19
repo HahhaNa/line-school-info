@@ -1,12 +1,16 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction
+from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
 
 import firebase_admin
 from firebase_admin import credentials, db
 import os
 import time
+
+# image.py import
+from image import handle_image_message
+
 
 # 初始化 Flask 應用
 app = Flask(__name__)
@@ -51,10 +55,9 @@ def callback():
 def handle_follow(event):
     send_welcome_message(event)
 
-@handler.add(MessageEvent, message=TextMessage)
+@handler.add(MessageEvent, message=(TextMessage, ImageMessage))
 def handle_message(event):
     user_id = event.source.user_id
-    user_message = event.message.text
 
     # 檢查 reply token 是否有效
     if event.reply_token == '00000000000000000000000000000000':
@@ -63,51 +66,59 @@ def handle_message(event):
 
     reply_message = None
 
-    # 處理不同的指令
-    if user_message == '!查看筆記':
-        notes = get_user_notes(user_id)
-        reply_message = f'這是您的筆記內容：\n{notes}'
-    elif user_message == '!查看活動事件':
-        events = get_user_events(user_id)
-        reply_message = f'這是您最近的活動：\n{events}'
-    elif user_message == '!查看當日TODO':
-        todos = get_user_todos(user_id)
-        reply_message = f'這是您今日的TODO：\n{todos}'
-    elif user_message == '!新增筆記':
-        reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
-    elif user_message.startswith('content:'):
-        note_content = user_message.split('content:', 1)[1].strip()
-        add_user_note(user_id, note_content)
-        reply_message = '筆記已新增！'
-    elif user_message == '!新增活動事件':
-        reply_message = '請輸入活動事件，格式為：\ntitle: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
-    elif user_message.startswith('title:'):
-        try:
-            event_details = parse_event_details(user_message)
-            add_user_event(user_id, event_details)
-            reply_message = '活動事件已新增！'
-        except ValueError as ve:
-            reply_message = f'格式錯誤: {ve}'
-        except Exception as e:
-            reply_message = f'新增活動事件失敗: {e}'
-    elif user_message == '!新增TO-DO':
-        # 單純提供格式，而不進行任何資料庫操作
-        reply_message = '請輸入TO-DO，格式為：\ndeadline: ...\ndescription: ...'
-    elif user_message.startswith('deadline:'):
-        try:
-            todo_details = parse_todo_details(user_message)
-            add_user_todo(user_id, todo_details)
-            reply_message = 'TO-DO 已新增！'
-        except ValueError as ve:
-            reply_message = f'格式錯誤: {ve}'
-        except Exception as e:
-            reply_message = f'新增 TO-DO 失敗: {e}'
-    else:
-        reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
+    # 檢查訊息類型
+    if isinstance(event.message, TextMessage):
+        user_message = event.message.text
 
-    # 回覆用戶
-    if reply_message:
-        send_reply_message(event, reply_message)
+        # 處理不同的指令
+        if user_message == '!查看筆記':
+            notes = get_user_notes(user_id)
+            reply_message = f'這是您的筆記內容：\n{notes}'
+        elif user_message == '!查看活動事件':
+            events = get_user_events(user_id)
+            reply_message = f'這是您最近的活動：\n{events}'
+        elif user_message == '!查看當日TODO':
+            todos = get_user_todos(user_id)
+            reply_message = f'這是您今日的TODO：\n{todos}'
+        elif user_message == '!新增筆記':
+            reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
+        elif user_message.startswith('content:'):
+            note_content = user_message.split('content:', 1)[1].strip()
+            add_user_note(user_id, note_content)
+            reply_message = '筆記已新增！'
+        elif user_message == '!新增活動事件':
+            reply_message = '請輸入活動事件，格式為：\ntitle: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
+        elif user_message.startswith('title:'):
+            try:
+                event_details = parse_event_details(user_message)
+                add_user_event(user_id, event_details)
+                reply_message = '活動事件已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增活動事件失敗: {e}'
+        elif user_message == '!新增TO-DO':
+            # 單純提供格式，而不進行任何資料庫操作
+            reply_message = '請輸入TO-DO，格式為：\ndeadline: ...\ndescription: ...'
+        elif user_message.startswith('deadline:'):
+            try:
+                todo_details = parse_todo_details(user_message)
+                add_user_todo(user_id, todo_details)
+                reply_message = 'TO-DO 已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增 TO-DO 失敗: {e}'
+        else:
+            reply_message = '抱歉，我不太明白您的指令。請選擇以下其中一個操作：'
+
+        # 回覆用戶
+        if reply_message:
+            send_reply_message(event, reply_message)
+
+    elif isinstance(event.message, ImageMessage):
+        # 如果是圖片訊息，呼叫 handle_image_message
+        handle_image_message(event)
 
 # 輔助函數，用於解析活動事件的細節
 def parse_event_details(user_message):
