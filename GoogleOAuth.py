@@ -3,7 +3,8 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 import firebase_admin
 from firebase_admin import credentials, db
-
+import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 app = Flask(__name__)
 app.secret_key = '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'
 flow = None
@@ -20,7 +21,7 @@ def login():
     global flow
     flow = Flow.from_client_secrets_file(
         'client_secret.json',
-        scopes=['https://www.googleapis.com/auth/gmail.readonly'],
+        scopes=['https://www.googleapis.com/auth/gmail.readonly', 'openid', 'https://www.googleapis.com/auth/userinfo.email'],
         redirect_uri=url_for('callback', _external=True)
     )
     auth_url, _ = flow.authorization_url(prompt='consent')
@@ -31,7 +32,7 @@ def login():
 def callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
-
+    print(credentials)
     # 將 token.json 儲存到 Firebase
     user_id = session.get('user_id')
     ref = db.reference(f'/users/{user_id}')
