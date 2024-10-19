@@ -7,6 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 import os
 import time
+import json
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', 'U5q89tva8HSnVXrP91MStbXkyLoNL9qWlm1i810j46Kyp/VmgYPsvbz/Mfb//Jgu6G7kJHuYd1nXH2rVAm6NF3H4ord5OxhaXnHRjYXKPKYys4vdiVBAgtD2kF0IWIzI7MYvgfMXVIvQ8FmrvOvbrAdB04t89/1O/w1cDnyilFU=')
 LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '9b39153b154382ce669ca95fb4a11305')
@@ -209,19 +210,156 @@ def add_user_todo(user_id, todo_data):
 
 
 # 更新後的筆記、活動事件和 TO-DO 的檢索函數
+def get_flex_message_for_notes(note_contents):
+    # 生成 Flex Message
+    contents = []
+    for note in note_contents:
+        contents.append({
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "spacing": "sm",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": note,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "sm",
+                    "flex": 5
+                }
+            ]
+        })
+    
+    flex_message = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": "您的筆記",
+                    "weight": "bold",
+                    "size": "lg"
+                },
+                {
+                    "type": "separator",
+                    "margin": "md"
+                },
+                *contents
+            ]
+        }
+    }
+    return json.dumps(flex_message)
+
+
+
+def get_flex_message_for_events(event_contents):
+    contents = []
+    for event in event_contents:
+        contents.append({
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "spacing": "sm",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": event,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "sm",
+                    "flex": 5
+                }
+            ]
+        })
+    
+    flex_message = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": "您的活動事件",
+                    "weight": "bold",
+                    "size": "lg"
+                },
+                {
+                    "type": "separator",
+                    "margin": "md"
+                },
+                *contents
+            ]
+        }
+    }
+    return json.dumps(flex_message)
+
+
+
+def get_flex_message_for_todos(todo_contents):
+    contents = []
+    for todo in todo_contents:
+        contents.append({
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "spacing": "sm",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": todo,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "sm",
+                    "flex": 5
+                }
+            ]
+        })
+    
+    flex_message = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": "您的 TO-DO",
+                    "weight": "bold",
+                    "size": "lg"
+                },
+                {
+                    "type": "separator",
+                    "margin": "md"
+                },
+                *contents
+            ]
+        }
+    }
+    return json.dumps(flex_message)
+
+
+
 def get_user_notes(user_id):
     user_notes_ref = db.reference(f'users/{user_id}/notes')
     user_notes = user_notes_ref.get()
     if user_notes:
         notes_ref = db.reference('notes')
         note_contents = []
-        for note_id in user_notes.keys():  # 修正這裡，使用 keys() 以獲取所有 note 的 ID
+        for note_id in user_notes.keys():
             note = notes_ref.child(note_id).get()
             if note:
-                note_contents.append(f"- {note['content']}")
-        return "\n".join(note_contents)
+                note_contents.append(f"{note['content']}")
+        
+        # 使用 Flex Message 格式
+        return get_flex_message_for_notes(note_contents)
     else:
-        return "目前沒有任何筆記。"
+        return json.dumps({"type": "text", "text": "目前沒有任何筆記。"})
+
+
 
 def get_user_events(user_id):
     user_events_ref = db.reference(f'users/{user_id}/events')
@@ -229,13 +367,17 @@ def get_user_events(user_id):
     if user_events:
         events_ref = db.reference('events')
         event_contents = []
-        for event_id in user_events.keys():  # 修正這裡，使用 keys() 以獲取所有 event 的 ID
+        for event_id in user_events.keys():
             event = events_ref.child(event_id).get()
             if event:
-                event_contents.append(f"- {event['title']} ({event['startTime']} - {event['endTime']}): {event['description']}")
-        return "\n".join(event_contents)
+                event_contents.append(f"{event['title']} ({event['startTime']} - {event['endTime']}): {event['description']}")
+        
+        # 使用 Flex Message 格式
+        return get_flex_message_for_events(event_contents)
     else:
-        return "目前沒有任何活動事件。"
+        return json.dumps({"type": "text", "text": "目前沒有任何活動事件。"})
+
+
 
 def get_user_todos(user_id):
     user_todos_ref = db.reference(f'users/{user_id}/todos')
@@ -243,10 +385,12 @@ def get_user_todos(user_id):
     if user_todos:
         todos_ref = db.reference('todos')
         todo_contents = []
-        for todo_id in user_todos.keys():  # 修正這裡，使用 keys() 以獲取所有 TO-DO 的 ID
+        for todo_id in user_todos.keys():
             todo = todos_ref.child(todo_id).get()
             if todo:
-                todo_contents.append(f"- {todo['deadline']}: {todo['description']}")
-        return "\n".join(todo_contents)
+                todo_contents.append(f"{todo['deadline']}: {todo['description']}")
+        
+        # 使用 Flex Message 格式
+        return get_flex_message_for_todos(todo_contents)
     else:
-        return "目前沒有任何 TO-DO。"
+        return json.dumps({"type": "text", "text": "目前沒有任何 TO-DO。"})

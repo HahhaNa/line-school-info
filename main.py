@@ -1,8 +1,8 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
-
+from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage, FlexSendMessage
+import json
 import firebase_admin
 from firebase_admin import credentials, db
 import os
@@ -67,15 +67,24 @@ def handle_message(event):
         user_message = event.message.text
 
         # 處理不同的指令
-        if user_message == '!查看筆記':
-            notes = utility.get_user_notes(user_id)
-            reply_message = f'這是您的筆記內容：\n{notes}'
-        elif user_message == '!查看活動事件':
-            events = utility.get_user_events(user_id)
-            reply_message = f'這是您最近的活動：\n{events}'
-        elif user_message == '!查看當日TODO':
-            todos = utility.get_user_todos(user_id)
-            reply_message = f'這是您今日的TODO：\n{todos}'
+        if event.message.text == '!查看筆記':
+            notes_flex = utility.get_user_notes(user_id)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的筆記內容', contents=json.loads(notes_flex))
+            )
+        elif event.message.text == '!查看活動事件':
+            events_flex = utility.get_user_events(user_id)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的活動事件', contents=json.loads(events_flex))
+            )
+        elif event.message.text == '!查看當日TODO':
+            todos_flex = utility.get_user_todos(user_id)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的 TO-DO', contents=json.loads(todos_flex))
+            )
         elif user_message == '!新增筆記':
             reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
         elif user_message.startswith('content:'):
