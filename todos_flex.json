@@ -1,0 +1,44 @@
+{
+    "type": "bubble",
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "您的 TO-DO",
+          "weight": "bold",
+          "size": "lg"
+        },
+        {
+          "type": "separator",
+          "margin": "md"
+        },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "margin": "md",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "text",
+              "text": "TO-DO 1 (期限): 描述內容",
+              "wrap": true,
+              "color": "#666666",
+              "size": "sm",
+              "flex": 5
+            },
+            {
+              "type": "text",
+              "text": "TO-DO 2 (期限): 描述內容",
+              "wrap": true,
+              "color": "#666666",
+              "size": "sm",
+              "flex": 5
+            }
+          ]
+        }
+      ]
+    }
+  }
+  

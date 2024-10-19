@@ -1,0 +1,44 @@
+{
+    "type": "bubble",
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "您的活動事件",
+          "weight": "bold",
+          "size": "lg"
+        },
+        {
+          "type": "separator",
+          "margin": "md"
+        },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "margin": "md",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "text",
+              "text": "活動事件1 (開始時間 - 結束時間): 描述內容",
+              "wrap": true,
+              "color": "#666666",
+              "size": "sm",
+              "flex": 5
+            },
+            {
+              "type": "text",
+              "text": "活動事件2 (開始時間 - 結束時間): 描述內容",
+              "wrap": true,
+              "color": "#666666",
+              "size": "sm",
+              "flex": 5
+            }
+          ]
+        }
+      ]
+    }
+  }
+  

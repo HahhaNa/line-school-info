@@ -11,7 +11,7 @@ import utility
 from flask import Flask, request, abort
 
 # 設定 pytesseract 的安裝路徑
-# pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
 
 # 初始化 logger
 logger = logging.getLogger(__name__)
