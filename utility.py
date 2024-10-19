@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage
+from linebot.models import FollowEvent, MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction, ImageMessage, FlexSendMessage
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -346,6 +346,8 @@ def get_flex_message_for_todos(todo_contents):
 def get_user_notes(user_id):
     user_notes_ref = db.reference(f'users/{user_id}/notes')
     user_notes = user_notes_ref.get()
+
+    # 檢查筆記是否存在
     if user_notes:
         notes_ref = db.reference('notes')
         note_contents = []
@@ -354,13 +356,14 @@ def get_user_notes(user_id):
             if note:
                 note_contents.append(f"{note['content']}")
         
+        # 如果有筆記，回傳 Flex Message 格式
         return get_flex_message_for_notes(note_contents)
     else:
+        # 沒有筆記時回傳簡單的文本訊息
         return {
             "type": "text",
             "text": "目前沒有任何筆記。"
         }
-
 
 
 def get_user_events(user_id):
@@ -396,3 +399,20 @@ def get_user_todos(user_id):
         return get_flex_message_for_todos(todo_contents)
     else:
         return json.dumps({"type": "text", "text": "目前沒有任何 TO-DO。"})
+
+
+
+
+def send_flex_message_with_quick_reply(event, flex_message):
+    quick_reply_buttons = create_quick_reply_buttons()
+    reply_message = FlexSendMessage(
+        alt_text='這是您的內容',
+        contents=flex_message
+    )
+    text_message = TextSendMessage(
+        text='請選擇下一步：',
+        quick_reply=quick_reply_buttons
+    )
+    
+    # 回傳 Flex Message 和 Quick Reply
+    line_bot_api.reply_message(event.reply_token, [reply_message, text_message])
