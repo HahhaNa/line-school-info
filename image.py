@@ -3,9 +3,11 @@ from io import BytesIO
 import pytesseract
 import re
 import logging
+import os 
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import TextSendMessage, ImageMessage
-import os 
+from classify import classify
+import utility
 
 # 設定 pytesseract 的安裝路徑
 pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
@@ -38,11 +40,33 @@ def handle_image_message(event):
         extracted_text = extract_text_from_image(image)
 
         if extracted_text:
-            reply_message = TextSendMessage(text=extracted_text)
+            # reply_message = TextSendMessage(text=extracted_text)
+            type, text = classify(extracted_text)
+            if type == "note":
+                utility.add_user_note(event.source.user_id, text)
+                reply_message = '筆記已新增！'
+            elif type == "todo":
+                try:
+                    utility.add_user_todo(event.source.user_id, text)
+                    reply_message = 'TO-DO 已新增！'
+                except ValueError as ve:
+                    reply_message = f'格式錯誤: {ve}'
+                except Exception as e:
+                    reply_message = f'新增 TO-DO 失敗: {e}'
+            elif type == "event":
+                try:
+                    utility.add_user_event(event.source.user_id, text)
+                    reply_message = '活動事件已新增！'
+                except ValueError as ve:
+                    reply_message = f'格式錯誤: {ve}'
+                except Exception as e:
+                    reply_message = f'新增活動事件失敗: {e}'
+            else:
+                line_bot_api.reply_message(event.reply_token, "Invalid type")
         else:
             reply_message = TextSendMessage(text="Sorry, I couldn't extract any text from the image.")
+            line_bot_api.reply_message(event.reply_token, reply_message)
 
-        line_bot_api.reply_message(event.reply_token, reply_message)
     except Exception as e:
         logger.error(f"Error handling image message: {str(e)}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="An error occurred while processing the image."))
