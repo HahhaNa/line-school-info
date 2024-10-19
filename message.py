@@ -37,22 +37,22 @@ def handle_text_message(event):
     try:
         response_type, formatted_output = classify(event.message.text)
         if response_type == "unknown":
-            reply_message = TextSendMessage(text="抱歉，我不太明白您的指令。請選擇以下其中一個操作：")
+            reply_message = "抱歉，我不太明白您的指令。請選擇以下其中一個操作："
         elif response_type == "note":
-            reply_message = TextSendMessage(text="筆記已新增！")
+            reply_message = "筆記已新增！"
             utility.add_user_note(event.source.user_id, formatted_output)
         elif response_type == "todo":
-            reply_message = TextSendMessage(text="TO-DO 已新增！")
+            reply_message = "TO-DO 已新增！"
             utility.add_user_todo(event.source.user_id, formatted_output)
         elif response_type == "event":
-            reply_message = TextSendMessage(text="活動事件已新增！")
+            reply_message = "活動事件已新增！"
             utility.add_user_event(event.source.user_id, formatted_output)
         else:
-            reply_message = TextSendMessage(text="Sorry, I couldn't classify the content.")
+            reply_message = "Sorry, I couldn't classify the content."
 
     except Exception as e:
         logger.error(f"Error handling text message: {str(e)}")
-        reply_message = TextSendMessage(text="An error occurred while processing the text.")
+        reply_message = "An error occurred while processing the text."
     return reply_message
 
 @handler.add(MessageEvent, message=ImageMessage)
