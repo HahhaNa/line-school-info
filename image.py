@@ -8,7 +8,7 @@ from linebot.models import TextSendMessage, ImageMessage
 import os 
 from classify import classify
 import utility
-import requests
+from flask import Flask, request, abort
 
 # 設定 pytesseract 的安裝路徑
 # pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
