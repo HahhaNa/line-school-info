@@ -66,24 +66,31 @@ def handle_message(event):
     if isinstance(event.message, TextMessage):
         user_message = event.message.text
 
+        # 處理不同的指令
         if user_message == '!查看筆記':
             notes_flex = utility.get_user_notes(user_id)
-            utility.send_flex_message_with_quick_reply(event, notes_flex)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的筆記內容', contents=json.loads(notes_flex))
+            )
         elif user_message == '!查看活動事件':
             events_flex = utility.get_user_events(user_id)
-            utility.send_flex_message_with_quick_reply(event, events_flex)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的活動事件', contents=json.loads(events_flex))
+            )
         elif user_message == '!查看當日TODO':
             todos_flex = utility.get_user_todos(user_id)
-            utility.send_flex_message_with_quick_reply(event, todos_flex)
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text='這是您的 TO-DO', contents=json.loads(todos_flex))
+            )
         elif user_message == '!新增筆記':
             reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
-            utility.send_reply_message(event, reply_message)
         elif user_message.startswith('content:'):
             note_content = user_message.split('content:', 1)[1].strip()
             utility.add_user_note(user_id, note_content)
             reply_message = '筆記已新增！'
-            utility.send_reply_message(event, reply_message)
-
         elif user_message == '!新增活動事件':
             reply_message = '請輸入活動事件，格式為：\ntitle: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
         elif user_message.startswith('title:'):
