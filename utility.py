@@ -356,14 +356,10 @@ def get_user_notes(user_id):
             if note:
                 note_contents.append(f"{note['content']}")
         
-        # 如果有筆記，回傳 Flex Message 格式
+        # 如果有筆記，回傳 Flex Message 格式，注意應回傳字典，而非字串
         return get_flex_message_for_notes(note_contents)
     else:
-        # 沒有筆記時回傳簡單的文本訊息
-        return {
-            "type": "text",
-            "text": "目前沒有任何筆記。"
-        }
+        return json.dumps({"type": "text", "text": "目前沒有任何筆記。"})
 
 
 def get_user_events(user_id):
@@ -405,14 +401,86 @@ def get_user_todos(user_id):
 
 def send_flex_message_with_quick_reply(event, flex_message):
     quick_reply_buttons = create_quick_reply_buttons()
-    reply_message = FlexSendMessage(
+    
+    # 1. Send the Flex Message
+    reply_flex_message = FlexSendMessage(
         alt_text='這是您的內容',
-        contents=flex_message
-    )
-    text_message = TextSendMessage(
-        text='請選擇下一步：',
-        quick_reply=quick_reply_buttons
+        contents=json.loads(flex_message)
     )
     
-    # 回傳 Flex Message 和 Quick Reply
-    line_bot_api.reply_message(event.reply_token, [reply_message, text_message])
+    # 2. Send the Quick Reply Message
+    quick_reply_message = TextSendMessage(
+        text="請選擇下一步：",
+        quick_reply=quick_reply_buttons
+    )
+    if(reply_flex_message):
+        # Send both the Flex Message and Quick Reply
+        line_bot_api.reply_message(
+            event.reply_token, 
+            [reply_flex_message, quick_reply_message]
+        )
+    else:
+        line_bot_api.reply_message(
+            event.reply_token, 
+            quick_reply_message
+        )
+
+def get_user_class(user_id):
+    user_class_ref = db.reference(f'timetables/{user_id}')
+    user_class = user_class_ref.get()
+
+    # 設定禮拜一到禮拜五的鍵值
+    weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+
+    class_contents = []
+    
+    # 迴圈處理每一天的課表
+    for day in weekdays:
+        day_classes = user_class.get(day, [])
+        class_contents.append(f"{day.capitalize()} 課表:")
+        
+        if day_classes:
+            for course in day_classes:
+                class_contents.append(f"  第 {course['period']} 節: {course['course']}")
+        else:
+            class_contents.append("  今天沒有課！")
+
+    # 以換行符號拼接所有課表資訊
+    return "\n".join(class_contents)
+
+def get_user_gmail(user_id):
+    try:
+        user_gmail_ref = db.reference(f'users/{user_id}/gmail')
+    except Exception as e:
+        return "新增gmail:\ngmail_acount:\npassword:\n"
+    user_gmail = user_gmail_ref.get()
+    if user_gmail:
+        gmail_ref = db.reference('gmail')
+        for gmail_id in user_gmail.keys():  # 修正這裡，使用 keys() 以獲取所有 TO-DO 的 ID
+            gmail = gmail_ref.child(gmail_id).get()
+        return gmail
+    else:
+        return "新增gmail:\ngmail_acount:\npassword:\n"
+
+
+def parse_gmail_details(user_message):
+    if not isinstance(user_message, str):
+        raise ValueError("輸入的資料不是字符串，請檢查傳入的資料類型。")
+
+    lines = user_message.split('\n')
+    gmail = {}
+    required_fields = ['gmail_acount', 'password']
+
+    for line in lines:
+        if ':' in line:
+            key, value = line.split(':', 1)
+            key = key.strip()
+            value = value.strip()
+            if key in required_fields:
+                gmail[key] = value
+
+    # 檢查是否所有的必需欄位都存在
+    if not all(field in gmail for field in required_fields):
+        raise ValueError('請確保包含 gmail acount 和 password 所有字段')
+
+    return gmail

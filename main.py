@@ -7,7 +7,8 @@ import firebase_admin
 from firebase_admin import credentials, db
 import os
 import time
-
+import time
+from mail import search_and_extract_emails
 # image.py import
 from message import handle_image_message, handle_text_message
 import utility
@@ -66,33 +67,40 @@ def handle_message(event):
     if isinstance(event.message, TextMessage):
         user_message = event.message.text
 
-        # 處理不同的指令
         if user_message == '!查看筆記':
             notes_flex = utility.get_user_notes(user_id)
-            line_bot_api.reply_message(
-                event.reply_token,
-                FlexSendMessage(alt_text='這是您的筆記內容', contents=json.loads(notes_flex))
-            )
+            utility.send_flex_message_with_quick_reply(event, notes_flex)
         elif user_message == '!查看活動事件':
             events_flex = utility.get_user_events(user_id)
-            line_bot_api.reply_message(
-                event.reply_token,
-                FlexSendMessage(alt_text='這是您的活動事件', contents=json.loads(events_flex))
-            )
+            utility.send_flex_message_with_quick_reply(event, events_flex)
         elif user_message == '!查看當日TODO':
             todos_flex = utility.get_user_todos(user_id)
-            line_bot_api.reply_message(
-                event.reply_token,
-                FlexSendMessage(alt_text='這是您的 TO-DO', contents=json.loads(todos_flex))
-            )
+            utility.send_flex_message_with_quick_reply(event, todos_flex)
         elif user_message == '!新增筆記':
             reply_message = '請輸入您想新增的筆記內容，格式為：\ncontent:'
+            utility.send_reply_message(event, reply_message)
         elif user_message.startswith('content:'):
             note_content = user_message.split('content:', 1)[1].strip()
             utility.add_user_note(user_id, note_content)
             reply_message = '筆記已新增！'
+            utility.send_reply_message(event, reply_message)
+
         elif user_message == '!新增活動事件':
             reply_message = '請輸入活動事件，格式為：\ntitle: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
+        
+
+        elif user_message == '!我的課表':
+            reply_message = '請輸入您的姓名，格式為：\nname:'
+            utility.send_reply_message(event, reply_message)
+       
+        elif user_message.startswith('name:'):
+            note_content = user_message.split('name:', 1)[1].strip()
+            class_flex = utility.get_user_todos(note_content)
+            reply_message = '您的課表如下！'
+            utility.send_reply_message(event, reply_message)
+            utility.send_flex_message_with_quick_reply(event, class_flex)
+        
+
         elif user_message.startswith('title:'):
             try:
                 event_details = utility.parse_event_details(user_message)
@@ -114,12 +122,29 @@ def handle_message(event):
                 reply_message = f'格式錯誤: {ve}'
             except Exception as e:
                 reply_message = f'新增 TO-DO 失敗: {e}'
+        elif user_message == '!搜尋gmail':
+            reply = utility.get_user_gmail(user_id)
+            if reply == '新增gmail，格式為：\ngmail_acount: ...\npassword: ...' :
+                reply_message = reply
+            else:
+                email , password= utility.get_user_gmail(user_id)
+                reply_message = search_and_extract_emails(email, password, datetime.now().strftime('%d-%b-%Y'))
+        elif user_message.startswith('gmail_acount:'):
+            try:
+                gmail_details = utility.parse_gmail_details(user_message)
+                utility.add_user_gmail(user_id, gmail_details)
+                reply_message = 'Gmail 已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增 Gmail 失敗: {e}'
+
         else:
             reply_message = handle_text_message(event)
 
     elif isinstance(event.message, ImageMessage):
         # 如果是圖片訊息，呼叫 handle_image_message
-        reply_message = handle_image_message(event)
+        handle_image_message(event)
 
     # 回覆用戶
     if reply_message:

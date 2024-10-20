@@ -16,10 +16,10 @@ def format_data(type: str, text: str):
         return ""
 
 def format_note(text: str):
-    response = {{
-        "content": text
-    }}
-    print(response)
+    # response = {{
+    #     "content": text
+    # }}
+    # print(response)
     return text
     # return response
 
@@ -38,18 +38,8 @@ def format_todo(text: str):
     如果是中華民國年，請轉換成西元年，例如 110 年要轉換成 2021 年。
     content 請只保留純文字，不要有任何 HTML 標籤。
     不准有 markdown 的格式。
-    輸出成dict，絕對不能有其他多餘的格式，例如：
-    {
-        "deadline": "20240409T070000Z",
-        "description": "這是描述"
-    }
+    輸出格式為：'deadline: ...\ndescription: ...'
     """
-    # 輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
-    # {{
-    #     "deadline": "20240409T070000Z",
-    #     "description": "這是描述"
-    # }}
-    # """
 
     # Generate content using the model
     response = model.generate_content([prompt, text])
@@ -70,31 +60,15 @@ def format_event(text: str):
     
     # Define the prompt for generating the content
     prompt = f"""
-    請幫我把文字中的時間、地點、活動標題 以及活動內容提取出來。
+    請幫我把文字中的時間、活動標題 以及活動內容提取出來。
     如果有沒提到的資訊，就留空白。
     其中時間區間的格式必須符合 Google Calendar 的格式，像是 "20240409T070000Z/20240409T080000Z"。
     由於時區為 GMT+8，所以請記得將時間換算成 GMT+0 的時間。
     如果是中華民國年，請轉換成西元年，例如 110 年要轉換成 2021 年。
     content 請只保留純文字，不要有任何 HTML 標籤，並且幫忙列點一些活動的注意事項。
     不准有 markdown 的格式。
-    輸出成dict，絕對不能有其他多餘的格式，例如：
-    {
-        "title": "活動標題",
-        "description": "這是描述",
-        "location": "地點",
-        "startTime": "20240409T070000Z",
-        "endTime": "20240409T080000Z"
-    }
+    輸出格式為：'title: ...\ndescription: ...\nstartTime: ...\nendTime: ...'
     """
-    # 輸出成 JSON 格式，絕對不能有其他多餘的格式，例如：
-    # {{
-    #     "title": "活動標題",
-    #     "description": "這是描述",
-    #     "location": "地點",
-    #     "startTime": "20240409T070000Z",
-    #     "endTime": "20240409T080000Z",
-    # }}
-    # """
 
     # Generate content using the model
     response = model.generate_content([prompt, text])

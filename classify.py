@@ -8,7 +8,7 @@ logger = logging.getLogger(__file__)
 
 def classify(text: str):
     # Configure the generative AI API with the API key
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    genai.configure(api_key='AIzaSyAD36Z_DPmh0ujA8yG04NBEhh_rezXacv0')
     
     # Specify the model you want to use (ensure the model name is correct)
     model = genai.GenerativeModel("gemini-1.5-flash")

@@ -43,23 +43,36 @@ def handle_text_message(event):
     try:
         response_type, formatted_output = classify(event.message.text)
         if response_type == "unknown":
-            reply_message = "抱歉，我不太明白您的指令。請選擇以下其中一個操作："
+            reply_message = "抱歉，這是一個我不太明白的指令。請選擇以下其中一個操作，謝謝："
         elif response_type == "note":
-            reply_message = "筆記已新增！"
+            # note_content = formatted_output.split('content:', 1)[1].strip()
             utility.add_user_note(event.source.user_id, formatted_output)
+            reply_message = '筆記已新增！'
         elif response_type == "todo":
-            reply_message = "TO-DO 已新增！"
-            utility.add_user_todo(event.source.user_id, formatted_output)
+            try:
+                todo_details = utility.parse_todo_details(formatted_output)
+                utility.add_user_todo(event.source.user_id, todo_details)
+                reply_message = 'TO-DO 已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增 TO-DO 失敗: {e}'
         elif response_type == "event":
-            reply_message = "活動事件已新增！"
-            utility.add_user_event(event.source.user_id, formatted_output)
+            try:
+                event_details = utility.parse_event_details(formatted_output)
+                utility.add_user_event(event.source.user_id, event_details)
+                reply_message = '活動事件已新增！'
+            except ValueError as ve:
+                reply_message = f'格式錯誤: {ve}'
+            except Exception as e:
+                reply_message = f'新增活動事件失敗: {e}'
         else:
             reply_message = "Sorry, I couldn't classify the content."
 
     except Exception as e:
         logger.error(f"Error handling text message: {str(e)}")
-        reply_message = "An error occurred while processing the text."
-    return reply_message
+        reply_message = f"Error handling text message: {str(e)}"
+    utility.send_reply_message(event, reply_message)
 
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image_message(event):
@@ -72,7 +85,7 @@ def handle_image_message(event):
     image = Image.open(BytesIO(message_content.content))
     extracted_text = extract_text_from_image(image)
 
-    return handle_text_message(TextMessage(id=message_id, text=extracted_text))
+    handle_text_message(TextMessage(id=message_id, text=extracted_text))
 
 def extract_text_from_image(image: Image.Image):
     """
