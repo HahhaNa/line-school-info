@@ -11,5 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 複製所有應用程式代碼到工作目錄
 COPY . .
 
+EXPOSE 8000
+
 # 指定啟動命令
 CMD ["python", "main.py"]

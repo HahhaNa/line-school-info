@@ -9,6 +9,7 @@ import os
 from classify import classify
 import utility
 from flask import Flask, request, abort
+import requests
 
 # 設定 pytesseract 的安裝路徑
 pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
@@ -62,7 +63,7 @@ def extract_text_from_image(image: Image.Image):
         api_key = 'K84859559788957'
         url = 'https://api.ocr.space/parse/image'
 
-        response = request.post(
+        response = requests.post(
             url,
             files={'file': buffer},  # Provide the image as a binary file
             data={'apikey': api_key, 'language': 'eng'}  # Additional params if needed

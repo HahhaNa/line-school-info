@@ -3,7 +3,7 @@ flask
 firebase_admin
 uvicorn[standard]
 line-bot-sdk==2.0.1
-google-generative-ai
+google.generativeai
 grpcio
 pillow
 pytesseract
