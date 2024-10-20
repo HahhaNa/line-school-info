@@ -9,4 +9,3 @@ pillow
 pytesseract
 requests
 git+https://github.com/ozgur/python-firebase
-git+https://github.com/madmaze/pytesseract
