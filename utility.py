@@ -418,25 +418,40 @@ def send_flex_message_with_quick_reply(event, flex_message):
     line_bot_api.reply_message(event.reply_token, [reply_message, text_message])
 
     
-def get_user_class(user_id):
-    user_class_ref = db.reference(f'timetables/{user_id}')
-    user_class = user_class_ref.get()
+# def get_user_class(user_id):
+#     user_class_ref = db.reference(f'timetables/{user_id}')
+#     user_class = user_class_ref.get()
 
-    # 設定禮拜一到禮拜五的鍵值
-    weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+#     # 設定禮拜一到禮拜五的鍵值
+#     weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
 
-    class_contents = []
+#     class_contents = []
     
-    # 迴圈處理每一天的課表
-    for day in weekdays:
-        day_classes = user_class.get(day, [])
-        class_contents.append(f"{day.capitalize()} 課表:")
+#     # 迴圈處理每一天的課表
+#     for day in weekdays:
+#         day_classes = user_class.get(day, [])
+#         class_contents.append(f"{day.capitalize()} 課表:")
         
-        if day_classes:
-            for course in day_classes:
-                class_contents.append(f"  第 {course['period']} 節: {course['course']}")
-        else:
-            class_contents.append("  今天沒有課！")
+#         if day_classes:
+#             for course in day_classes:
+#                 class_contents.append(f"  第 {course['period']} 節: {course['course']}")
+#         else:
+#             class_contents.append("  今天沒有課！")
 
-    # 以換行符號拼接所有課表資訊
-    return "\n".join(class_contents)
+#     # 以換行符號拼接所有課表資訊
+#     return "\n".join(class_contents)
+
+def get_user_todayclass(user_id):
+    user_todayclass_ref = db.reference(f'timetables/張瑜庭')
+    user_todayclass = user_todayclass_ref.get()
+
+    # 假設今天是星期一
+    today_classes = user_todayclass.get('monday', [])
+
+    if today_classes:
+        class_contents = []
+        for course in today_classes:
+            class_contents.append(f"第 {course['period']} 節: {course['course']}")
+        return "\n".join(class_contents)
+    else:
+        return "今天沒有課！"
