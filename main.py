@@ -108,14 +108,13 @@ def handle_message(event):
             except Exception as e:
                 reply_message = f'新增 TO-DO 失敗: {e}'
         elif user_message == '!我的課表':
-            reply_message = '請輸入您的姓名，格式為：\n您的姓名:'
+            reply_message = '請輸入您的姓名，格式為：\nname:'
             utility.send_reply_message(event, reply_message)
-        elif user_message.startswith('您的姓名:'):
-            note_content = user_message.split('content:', 1)[1].strip()
+        elif user_message.startswith('name:'):
+            note_content = user_message.split('name:', 1)[1].strip()
             utility.get_user_class(note_content)
-            reply_message = '您的課表如下'
+            reply_message = '您的課表如下！'
             utility.send_reply_message(event, reply_message)
-
         else:
             reply_message = handle_text_message(event)
 
