@@ -112,9 +112,10 @@ def handle_message(event):
             utility.send_reply_message(event, reply_message)
         elif user_message.startswith('name:'):
             note_content = user_message.split('name:', 1)[1].strip()
-            utility.get_user_class(note_content)
+            class_flex = utility.get_user_todos(note_content)
             reply_message = '您的課表如下！'
             utility.send_reply_message(event, reply_message)
+            utility.send_flex_message_with_quick_reply(event, class_flex)
         else:
             reply_message = handle_text_message(event)
 
